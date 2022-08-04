@@ -170,7 +170,6 @@ int main(int argc, char* argv[]) {
                                 break;
                             }
                         }
-                        printf("no data\n");
                     }
                     else
                     {
