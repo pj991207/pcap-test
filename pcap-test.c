@@ -160,13 +160,9 @@ int main(int argc, char* argv[]) {
                     printf("\n\n TCP DPORT : %d\n",ntohs(tcp->th_dport));
                     printf("\nPayload\n");
                     printf("\n DATA :");
-                    if(packet_size-total_size == 0)
+                    if(packet_size-total_size > 0)
                     {
-                        printf("no data\n");
-                    }
-                    else
-                    {
-                        for(int i=0;i<packet_size-total_size;i++)
+			for(int i=0;i<packet_size-total_size;i++)
                         {
                             printf("%02x |",payload[i]);
                             if(i==9)
@@ -174,6 +170,11 @@ int main(int argc, char* argv[]) {
                                 break;
                             }
                         }
+                        printf("no data\n");
+                    }
+                    else
+                    {
+			printf("no data\n");
                     }
                     printf("\n\n");
                 }
