@@ -169,7 +169,7 @@ int main(int argc, char* argv[]) {
                         for(int i=0;i<packet_size-total_size;i++)
                         {
                             printf("%02x |",payload[i]);
-                            if(i==10)
+                            if(i==9)
                             {
                                 break;
                             }
