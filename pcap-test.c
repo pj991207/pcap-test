@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
     const struct sniff_ethernet *ethernet;
     const struct sniff_ip *ip;
     const struct sniff_tcp *tcp;
-    const char *payload;
+    const u_char *payload;
     u_int ip_size;
     u_int tcp_size;
 	if (!parse(&param, argc, argv))
