@@ -81,8 +81,8 @@ int main(int argc, char* argv[]) {
 		return -1;
 
 	char errbuf[PCAP_ERRBUF_SIZE];
-	//pcap_t* pcap = pcap_open_live(param.dev_, BUFSIZ, 1, 1000, errbuf);
-	pcap_t* pcap = pcap_open_offline("a.pcap",errbuf);
+	pcap_t* pcap = pcap_open_live(param.dev_, BUFSIZ, 1, 1000, errbuf);
+	//pcap_t* pcap = pcap_open_offline("arp.pcap",errbuf);
 	if (pcap == NULL) {
 		fprintf(stderr, "pcap_open_live(%s) return null - %s\n", param.dev_, errbuf);
 		return -1;
@@ -102,80 +102,80 @@ int main(int argc, char* argv[]) {
 		int length = header->len;
 		ethernet = (struct sniff_ethernet*)(packet);
 		ip = (struct sniff_ip*)(packet+SIZE_ETHERNET);
+		int ip_version = (ip->ip_vhl & 0xf0)>>4;
+        int ip_hl = (ip->ip_vhl & 0x0f);
+        int ip_size = ip_version * ip_hl;
+        tcp = (struct sniff_tcp*)(packet+SIZE_ETHERNET+ip_size);
+        tcp_size = ((tcp->th_off&0xf0)>>4)*4+((tcp->th_off&0x0f))*4*16;
+        int packet_size = header -> caplen; //packet size
+        int total_size = SIZE_ETHERNET+ip_size+tcp_size; // tcp, ip, ethernet size
+        payload = (u_char*)(packet+SIZE_ETHERNET+ip_size+tcp_size);
 
-		printf("\n\nEthernet information\n");
-		printf("ETH dhost : ");
-		for (int i=0;i<6;i++)
-		{
-		    printf("%02x",ethernet->ether_dhost[i]);
-		}
-		printf("\n ETH shost : ");
-		for (int i=0;i<6;i++)
-		{
-		    printf("%02x",ethernet->ether_shost[i]);
-		}
-		int ip_version = (ip->ip_vhl & 0xf0)>>4;//ip version 체크
-		printf("\n\nIP information\n");
-		//printf(" ETH TYPE : %02x",ethernet->ether_type);
 		if(ntohs(ethernet->ether_type)==0x0800)
 		{
 		    if(ip_version == 4)
 		    {
-		        printf(" IP DHOST :");
-                for (int i = 0; i<4;i ++)
-                {
-                    printf("%d",ip->ip_dhost[i]);
-                    if(i!=3)
-                    {
-                        printf(".");
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-                printf("\n IP SHOST :");
-                for (int i = 0; i<4;i ++)
-                {
-                    printf("%d",ip->ip_shost[i]);
-                    if(i!=3)
-                    {
-                        printf(".");
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
                 if(ip->ip_p == 0x06)
                 {
-                    printf("\n\nTCP information\n");
-                    int ip_version = (ip->ip_vhl & 0xf0)>>4;
-                    int ip_hl = (ip->ip_vhl & 0x0f);
-                    if(ip_version == 4)
+                    printf("\n\nEthernet information\n");
+                    printf("\n ETH dhost : ");
+                    for (int i=0;i<6;i++)
                     {
-                        ip_size = ip_version * ip_hl;
-                        tcp = (struct sniff_tcp*)(packet+SIZE_ETHERNET+ip_size);
-                        printf(" TCP SPORT : %d",ntohs(tcp->th_sport));
-                        printf("\n TCP DPORT : %d\n",ntohs(tcp->th_dport));
-                        tcp_size = ((tcp->th_off&0xf0)>>4)*4+((tcp->th_off&0x0f))*4*16;
-                        printf("\n%u bytes captured ", header->caplen);
-                        printf("%d size\b",tcp_size+ip_size+SIZE_ETHERNET);
-                        payload = (u_char*)(packet+SIZE_ETHERNET+ip_size+tcp_size); //주소이슈
-                        printf("\n\nPayload\n");
-                        printf("DATA :");
-                        for(int i=0;i<10;i++)
+                        printf("%02x",ethernet->ether_dhost[i]);
+                    }
+                    printf("\n\n ETH shost : ");
+                    for (int i=0;i<6;i++)
+                    {
+                        printf("%02x",ethernet->ether_shost[i]);
+                    }
+                    printf("\n\nIP information\n");
+                    printf("\n IP DHOST :");
+                    for (int i = 0; i<4;i ++)
+                    {
+                        printf("%d",ip->ip_dhost[i]);
+                        if(i!=3)
                         {
-                            printf("%02x |",payload[i]);
+                            printf(".");
                         }
-                        payload = NULL;
-                        printf("\n\n");
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    printf("\n\n IP SHOST :");
+                    for (int i = 0; i<4;i ++)
+                    {
+                        printf("%d",ip->ip_shost[i]);
+                        if(i!=3)
+                        {
+                            printf(".");
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                    printf("\n\nTCP information\n");
+                    printf("\n TCP SPORT : %d",ntohs(tcp->th_sport));
+                    printf("\n\n TCP DPORT : %d\n",ntohs(tcp->th_dport));
+                    printf("\nPayload\n");
+                    printf("\n DATA :");
+                    if(packet_size-total_size == 0)
+                    {
+                        printf("no data\n");
                     }
                     else
                     {
-                        //ip가 v6일때
-                        continue;
+                        for(int i=0;i<packet_size-total_size;i++)
+                        {
+                            printf("%02x |",payload[i]);
+                            if(i==10)
+                            {
+                                break;
+                            }
+                        }
                     }
+                    printf("\n\n");
                 }
                 else
                 {
@@ -194,6 +194,7 @@ int main(int argc, char* argv[]) {
 		    //ip가아닌경우
 		    continue;
 		}
+		printf("\n\n");
 		/*printf(" ETH ENTIRE :");
 		while(length--)
 		{
